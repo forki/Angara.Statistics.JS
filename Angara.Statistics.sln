@@ -21,6 +21,20 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{ED8079DD
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Angara.Statistics.Tests", "tests\Angara.Statistics.Tests\Angara.Statistics.Tests.fsproj", "{D5620A55-AA34-4DE7-A970-B2168A06D28D}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{FF9102F6-CF57-42C7-A3D3-1C9BE1829B7E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "content", "content", "{F7080496-F095-4559-AE93-54B247121B02}"
+	ProjectSection(SolutionItems) = preProject
+		docs\content\index.fsx = docs\content\index.fsx
+		docs\content\tutorial.fsx = docs\content\tutorial.fsx
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{63FA74B1-A4B8-4255-9827-86ECA4E33451}"
+	ProjectSection(SolutionItems) = preProject
+		docs\tools\generate.fsx = docs\tools\generate.fsx
+		docs\tools\templates\template.cshtml = docs\tools\templates\template.cshtml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -41,5 +55,7 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{D5620A55-AA34-4DE7-A970-B2168A06D28D} = {ED8079DD-2B06-4030-9F0F-DC548F98E1C4}
+		{F7080496-F095-4559-AE93-54B247121B02} = {FF9102F6-CF57-42C7-A3D3-1C9BE1829B7E}
+		{63FA74B1-A4B8-4255-9827-86ECA4E33451} = {FF9102F6-CF57-42C7-A3D3-1C9BE1829B7E}
 	EndGlobalSection
 EndGlobal

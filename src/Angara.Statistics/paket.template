@@ -1,20 +1,20 @@
 type project
 title
-    ##ProjectName##
+    Angara.Statistics
 owners
     Vassily Lyutsarev
 authors 
     Vassily Lyutsarev
 projectUrl
-    http://github.com/microsoft/Angara.Statistics
+    http://predictionmachines.github.io/Angara.Statistics/
 iconUrl
-    https://raw.githubusercontent.com/microsoft/Angara.Statistics/master/docs/files/img/logo.png
+    https://raw.githubusercontent.com/predictionmachines/Angara.Statistics/master/docs/files/img/logo.png
 licenseUrl
-    http://github.com/microsoft/Angara.Statistics/blob/master/LICENSE.txt
+    http://github.com/predictionmachines/Angara.Statistics/blob/master/LICENSE.txt
 requireLicenseAcceptance
     false
 copyright
-    Copyright 2015
+    © 2016 Microsoft
 tags
     statistics probability fsharp
 summary
