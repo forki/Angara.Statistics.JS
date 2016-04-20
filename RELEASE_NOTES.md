@@ -1,6 +1,7 @@
 ### 0.1.4
 
 * Sampler state can be serialized to continue unfinished computation.
+* Fixed Mersenne twister copy constructor
 
 ### 0.1.3 - 2016-04-12
 
