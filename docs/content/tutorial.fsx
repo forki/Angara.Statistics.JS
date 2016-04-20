@@ -2,6 +2,11 @@
 // This block of code is omitted in the generated HTML documentation. Use 
 // it to define helpers that you do not want to show in the documentation.
 #I "../../bin/Angara.Statistics"
+#r "../../packages/docs/Angara.Serialization/lib/net452/Angara.Serialization.dll"
+#r "../../packages/docs/Angara.Serialization.Json/lib/net452/Angara.Serialization.Json.dll"
+#r "../../packages/docs/Angara.Reinstate/lib/net452/Angara.Reinstate.dll"
+#r "../../packages/docs/Angara.Html/lib/net452/Angara.Html.dll"
+#r "../../packages/docs/Angara.Chart/lib/net452/Angara.Chart.dll"
 #r "Angara.Statistics.dll"
 
 (**
@@ -60,17 +65,16 @@ The following sample code compares non-parametric density of the sample with the
 *)
 (*** define-output:sample ***)
 // estimate density curve in 16 points
-let sampling_density_x, sampling_density_y = kde 16 samples
+let sampling_density_x, sampling_density_y = kde 128 samples
 // compute exact probability density function
 let analytic_density_y = [|for x in sampling_density_x -> exp(log_pdf distribution x)|]
-// print the resulting table
-printfn ".   x   est.density exact.dnsty"
-Array.zip3 sampling_density_x sampling_density_y analytic_density_y
-|> Array.iter(fun (x, y1, y2) -> printfn "%6.1f %11.5f %11.5f" x y1 y2)
 
-(** The output of the above script:*)
-(*** include-output:sample ***)
+open Angara.Charting
+let chart = 
+    Chart.ofList [Plot.line(sampling_density_x, analytic_density_y, thickness=7., stroke="lightgray")
+                  Plot.line(sampling_density_x, sampling_density_y)]
 
+(*** include-value:chart ***)
 (**
 
 ### Sample statistics

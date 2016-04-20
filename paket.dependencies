@@ -19,3 +19,10 @@ group Build
 
   github fsharp/FAKE modules/Octokit/Octokit.fsx
 
+group Docs
+  source https://nuget.org/api/v2
+  
+  nuget Angara.Chart
+  nuget Angara.Html
+
+
