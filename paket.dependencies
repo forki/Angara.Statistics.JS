@@ -1,4 +1,14 @@
 source https://nuget.org/api/v2
+nuget Angara.Serialization
+
+group Test
+  source https://nuget.org/api/v2
+  
+  nuget Angara.Serialization.Json
+  nuget NUnit ~> 2
+  nuget NUnit.Runners ~> 2
+  nuget FsUnit
+  nuget unquote
 
 group Build
   source https://nuget.org/api/v2
@@ -9,10 +19,3 @@ group Build
 
   github fsharp/FAKE modules/Octokit/Octokit.fsx
 
-group Test
-  source https://nuget.org/api/v2
-  
-  nuget NUnit ~> 2
-  nuget NUnit.Runners ~> 2
-  nuget FsUnit
-  nuget unquote

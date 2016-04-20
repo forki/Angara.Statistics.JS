@@ -1,3 +1,7 @@
+### 0.1.4
+
+* Sampler state can be serialized to continue unfinished computation.
+
 ### 0.1.3 - 2016-04-12
 
 * Switch back to .NET Framework 4.5.2
