@@ -1,4 +1,4 @@
-(*** hide ***)
+﻿(*** hide ***)
 // This block of code is omitted in the generated HTML documentation. Use 
 // it to define helpers that you do not want to show in the documentation.
 #I "../../bin/Angara.Statistics"
@@ -9,6 +9,9 @@
 #r "../../packages/docs/Angara.Chart/lib/net452/Angara.Chart.dll"
 #r "Angara.Statistics.dll"
 (**
+# Distributions
+
+## Continuous random variables
 
 We will use the following code to present a PDF and a histogram of distributions supported by the package.
 This compares output of `draw` and `log_pdf` functions for the same distribution. 
@@ -33,7 +36,9 @@ let chart d xmin xmax =
 
 ### Uniform distribution
 
-`Uniform(lower_bound, upper_bound)`, e.g.
+`Uniform(lower_bound, upper_bound)` signifies a uniform distribution on [lower_bound, upper_bound) interval.
+Upper bound must be greater than lower bound.
+
 *)
 
 let chart_uniform =
@@ -59,7 +64,7 @@ let chart_loguniform =
 
 ### Normal distribution
 
-`Normal(mean, standard_deviation)`. This often used for real random values which exact distributions are not known. 
+`Normal(mean, standard_deviation)`. This is often used for real-valued random variables which exact distributions are not known. 
 
 *)
 
@@ -85,10 +90,11 @@ let chart_lognormal =
 
 ### Exponential distribution
 
-`Exponential(mean)`.
-It describes the time between events in a process
+`Exponential(mean)`
+describes the time between events in a process
 in which events occur continuously and independently at a constant average rate.
 The only parameter must be greater than zero.
+Values of an exponentially distributed random variable are always greater than zero.
 
 *)
 
@@ -101,7 +107,10 @@ let chart_exponential =
 
 ### Gamma distribution
 
-`Gamma(alpha, beta)`. This often used for real random values which exact distributions are not known. 
+`Gamma(alpha, beta)` - a family of distributions of positive values.
+The parameters alpha and beta are sometimes called shape and rate. Both must be greater than zero.
+`Gamma(1, 1/lambda) === Exponential(lambda)`.
+A special case of Gamma _Γ(k/2, 1/2)_ is a chi-squared distribution _χ²(k)_.
 
 *)
 
@@ -112,8 +121,22 @@ let chart_gamma =
 (*** include-value:chart_gamma ***)
 (**
 
-### Gamma distribution
+## Descrete distributions
 
-`Exponential(mean)`. This often used for real random values which exact distributions are not known. 
+### Bernoulli
+### Binomial
+### Negative binomial distribution
+### Poisson
+
+## Mixture
+
+`Mixture([w1,d1; w2,d2; ...])`, where w1, w2, ... - weights (real numbers) and d1, d2, ... - distributions.
+The list must not be empty and sum of the weights must be equal to one.
 
 *)
+let chart_mixture =
+    let d = Mixture([0.9,Normal(37.,9.); 0.1,Uniform(15.,20.)])
+    chart d 10. 64.
+
+(*** include-value:chart_mixture ***)
+
