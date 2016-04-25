@@ -14,7 +14,8 @@
 ### Distributions
 
 A `Distribution` is a value which allows to `draw` a pseudo-random number or compute a probability density function `log_pdf`.
-The `Distribution` discriminated union supports most common probability distributions like `Uniform` or `Normal`. More details are in a separate document page.
+The `Distribution` discriminated union supports most common probability distributions like `Uniform` or `Normal`. 
+More details are in a [separate document page](distributions.html).
 
 For example, here is how you define normal distribution once you've referenced Angara.Statistics.dll:
 *)

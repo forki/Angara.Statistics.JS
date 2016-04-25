@@ -9,7 +9,7 @@
 #r "../../packages/docs/Angara.Chart/lib/net452/Angara.Chart.dll"
 #r "Angara.Statistics.dll"
 (**
-# Distributions
+# Supported probability distributions
 
 ## Continuous random variables
 
@@ -36,7 +36,7 @@ let chart d xmin xmax =
 
 ### Uniform distribution
 
-`Uniform(lower_bound, upper_bound)` signifies a uniform distribution on [lower_bound, upper_bound) interval.
+`Uniform(lower_bound, upper_bound)` signifies a uniform probability distribution on [lower_bound, upper_bound) interval.
 Upper bound must be greater than lower bound.
 
 *)
@@ -99,8 +99,8 @@ Values of an exponentially distributed random variable are always greater than z
 *)
 
 let chart_exponential =
-    let d = Exponential(1.)
-    chart d 0. 5.
+    let d = Exponential(5.7)
+    chart d 0. 20.
 
 (*** include-value:chart_exponential ***)
 (**
@@ -123,11 +123,81 @@ let chart_gamma =
 
 ## Descrete distributions
 
+For these distributions `draw` function always returns non-negative random values with zero fraction part.
+Probability distribution function `log_pdf` truncates franction part of its argument.
+The only exception is Bernoulli distribution in which case `log_pdf` treats all values of its argument `x > 0.5` as `1`,
+and the rest argument valus are treated as `0`.
+
+The following code presents mass distribution and a histogram of 
+discrete probability distributions supported by the package.
+This compares output of `draw` and `log_pdf` functions for the same distribution. 
+
+*)
+
+let discrete_chart d =
+    let n, k, mt = 20, 20480, MT19937()
+    let h = Array.create (n+1) 0
+    seq {1..k} |> Seq.iter (fun _ ->
+        let i = int(draw mt d) in if i<=n then h.[i] <- h.[i]+1)
+    let xh = [|for i in 0..3*n+2 ->
+                if i%3=2 then nan 
+                else float(i/3)|]
+    let yh = [|for i in 0..3*n+2 ->
+                if i%3=0 then 0. 
+                elif i%3=1 then float(h.[i/3])/float k 
+                else nan |]
+    let ypdf = Array.mapi (fun i x ->
+        if i%3=0 then 0.0 else if i%3=2 then nan else exp(log_pdf d x)) xh
+    Chart.ofList [Plot.line(xh, ypdf, thickness=7., stroke="lightgray")
+                  Plot.line(xh, yh)]
+
+(**
+
 ### Bernoulli
+
+`Bernoulli(mean)` denotes distribution of a yes/no experiment (1 or 0) which yields success with probability `mean`.
+Note that `log_pdf` function returns the same value for all 'x > 0.5'; 
+
+*)
+let chart_bernoulli =
+    let d = Bernoulli(0.7)
+    discrete_chart d
+
+(*** include-value:chart_bernoulli ***)
+(**
 ### Binomial
+
+`Binomial(n, p)` is a number of successes
+in a sequence of `n` independent yes/no experiments, each of which yields success with probability `p`.
+*)
+let chart_binomial =
+    let d = Binomial(20, 0.7)
+    discrete_chart d
+
+(*** include-value:chart_binomial ***)
+(**
 ### Negative binomial distribution
+
+`NegativeBinomial(mean, r)` is a number of successes before a given number of failures `r`
+in a sequence of yes/no experiments, each of which yields success with probability `p = mean/(mean+r)`.
+*)
+let chart_negative_binomial =
+    let d = NegativeBinomial(5.7, 7.5)
+    discrete_chart d
+
+(*** include-value:chart_negative_binomial ***)
+(**
 ### Poisson
 
+`Poisson(mean)` is a number of events occuring in a fixed interval of time if these events occur with a known average rate = `mean`.
+
+*)
+let chart_poisson =
+    let d = Poisson(5.7)
+    discrete_chart d
+
+(*** include-value:chart_poisson ***)
+(**
 ## Mixture
 
 `Mixture([w1,d1; w2,d2; ...])`, where w1, w2, ... - weights (real numbers) and d1, d2, ... - distributions.
