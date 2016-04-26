@@ -34,12 +34,12 @@ NUGET
   specs:
     Angara.Chart (0.2)
       Angara.Serialization
-    Angara.Html (0.2.1)
-      Angara.Reinstate (>= 0.2.1)
+    Angara.Html (0.2.2)
+      Angara.Reinstate (>= 0.2.2)
       Angara.Serialization
       Angara.Serialization.Json
       DotNetZip
-    Angara.Reinstate (0.2.1)
+    Angara.Reinstate (0.2.2)
       Angara.Serialization
       Angara.Serialization.Json
     Angara.Serialization (0.2)
