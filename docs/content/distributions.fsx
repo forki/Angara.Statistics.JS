@@ -36,7 +36,7 @@ let chart d xmin xmax =
 
 ### Uniform distribution
 
-`Uniform(lower_bound, upper_bound)` signifies a uniform probability distribution on [lower_bound, upper_bound) interval.
+`Uniform(lower_bound, upper_bound)` signifies a uniform probability distribution on [lower\_bound, upper\_bound) interval.
 Upper bound must be greater than lower bound.
 
 *)
@@ -50,7 +50,8 @@ let chart_uniform =
 
 ### Log-uniform distribution
 
-`Uniform(lower_bound, upper_bound)`. A uniform distribution of `log(x)` is a non-uniform for `x`.
+`Uniform(lower_bound, upper_bound)`.
+A uniform distribution of `log(x)` is a non-uniform for `x`.
 Both bounds must be greater than zero. 
 
 *)
@@ -60,6 +61,25 @@ let chart_loguniform =
     chart d 0. 2.
 
 (*** include-value:chart_loguniform ***)
+(**
+
+### Linear distribution
+
+`Linear(lower_bound, upper_bound, density_at_lower_bound)`.
+Density function of this distribution is linear on a [lower\_bound, upper\_bound) range and is 'improbable' outside of it.
+Normalization condition gives us density value at upper bound: density\_at\_upper\_bound = density\_at\_lower\_bound + 2/(upper\_bound - lower\_bound).
+Density must be positive on both sides which restricts their possible values.
+If `density_at_lower_band` is outside of the permissible range, it is brought to the nearest permissible value.
+
+This distribution is useful as a component of `Mixture` (see below).
+
+*)
+
+let chart_linear =
+    let d = Linear(-1., 2., 0.2)
+    chart d -1.5 2.5
+
+(*** include-value:chart_linear ***)
 (**
 
 ### Normal distribution
@@ -77,7 +97,8 @@ let chart_normal =
 
 ### Log-normal distribution
 
-`LogNormal(mean, standard_deviation_log)`. A normal distribution of `log(x)`. The second parameter is a standard deviation of log(x), not a standard deviation of x. 
+`LogNormal(mean, standard_deviation_log)`. A normal distribution of `log(x)`.
+The second parameter is a standard deviation of log(x), not a standard deviation of x. 
 
 *)
 
