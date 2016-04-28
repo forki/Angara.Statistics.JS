@@ -224,10 +224,23 @@ let chart_poisson =
 `Mixture([w1,d1; w2,d2; ...])`, where w1, w2, ... - weights (real numbers) and d1, d2, ... - distributions.
 The list must not be empty and sum of the weights must be equal to one.
 
+Use it, for example, to model multi-modal distributions.
+
 *)
 let chart_mixture =
-    let d = Mixture([0.9,Normal(37.,9.); 0.1,Uniform(15.,20.)])
+    let d = Mixture([0.9,Normal(37.,9.); 0.1,Normal(17.,3.)])
     chart d 10. 64.
 
 (*** include-value:chart_mixture ***)
 
+(**
+There is also a helper method to build a distribution from a piecewise linear function
+as a mixture of `Linear` segments.
+*)
+let chart_piecewise =
+    let x = Array.init 21 (fun i -> float i*4.*pi/20.)
+    let density = x |> Array.map (fun x -> x, 1. - cos x)
+    let d = Distribution.fromPiecewise density
+    chart d -1. 14.
+
+(*** include-value:chart_piecewise ***)
