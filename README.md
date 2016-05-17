@@ -14,3 +14,7 @@ For now the following functions are tranlated and can be used from JavaScript:
 *   Statistics.idct - Inverse discrete cosine transform
 *   Statistics.fft - Fast Fourier transform
 *   Statistics.ifft - Inverse Fast Fourier Transform    
+
+The project also contains helper function *StatisticsHelpers.getTableViewerSource* that takes table data and using the functions above prepares the data structure to activate TableViewer.JS from Angara.Table project.
+
+See the [demo](http://itislab.github.io/Angara.Statistics.JS/table_stats_sample/)
