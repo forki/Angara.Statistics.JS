@@ -20,6 +20,79 @@ let tolerance = 1.1102230246251565E-16 // 2^(-53)
 /// Logarithm of `tolerance`
 let log_tolerance = log(tolerance) // -36.7
 
+let private isNan = System.Double.IsNaN
+let private isInf = System.Double.IsInfinity
+
+type summaryType = 
+    {count:int; min:float; max:float; mean:float; variance:float}    
+
+/// Produces cumulant summary of the data using fast one-pass algorithm.
+let summary data =
+    let folder summary d =
+        if isNan(d) || isInf(d) then 
+            summary 
+        else
+            let delta = d - summary.mean
+            let n = summary.count + 1
+            let mean = summary.mean + delta/float n
+            {
+                count = n
+                min = (min d summary.min)
+                max = (max d summary.max)
+                mean = mean
+                variance = summary.variance + delta*(d-mean)
+            }
+    let pass =
+        Seq.fold folder {
+                            count=0
+                            min=System.Double.PositiveInfinity
+                            max=System.Double.NegativeInfinity
+                            mean=0.0
+                            variance=0.0
+                            } data
+    if pass.count<2 then
+        pass
+    else
+        let pass = {pass with variance=pass.variance/(float(pass.count-1))}
+        pass
+
+type qsummaryType = 
+    {min:float; lb95:float; lb68:float; median:float; ub68:float; ub95:float; max:float}    
+
+/// Produces quantile summary of the data.
+let qsummary data =
+    let a = data |> Seq.filter(fun d -> not (System.Double.IsNaN(d) || System.Double.IsInfinity(d))) |> Seq.toArray
+    Array.sortInPlace a
+    let n = a.Length
+    if n<1 then {min=nan; lb95=nan; lb68=nan; median=nan; ub68=nan; ub95=nan; max=nan}
+    else
+        let q p =
+            // Definition 8 from Hyndman, R. J. and Fan, Y. (1996) Sample quantiles in statistical packages, American Statistician 50, 361–365.
+            // This is the same as stats.quantile(...,type=8) from R
+            let h = p*(float n + 1./3.)-2./3.
+            if h <= 0.0 then a.[0]
+            elif h >= float (n-1) then a.[n-1]
+            else
+                let fh = floor h
+                a.[int fh]*(1.0-h+fh) + a.[int fh + 1]*(h - fh)
+        {min=a.[0]; lb95=q(0.025); lb68=q(0.16); median=q(0.5); ub68=q(0.84); ub95=q(0.975); max=a.[n-1]}
+
+// Computes Pearson's correlation coefficient for two float arrays
+// The Pearson correlation is defined only if both of the standard deviations are finite and both of them are nonzero.
+// Returns NaN, otherwise.
+let correlation (x:float[]) (y:float[]) =
+    if x.Length <> y.Length then failwith "Different lengths of arrays"            
+    let filtered = Seq.zip x y |> Seq.filter (fun(u,v) -> not (isNan(u) || isNan(v) || isInf(u) || isInf(v))) |> Array.ofSeq;
+    let n = filtered.Length 
+    if n <= 1 then System.Double.NaN else
+    let _x, _y = Array.map fst filtered, Array.map snd filtered
+    let sx, sy = summary _x, summary _y
+    let stdx, stdy = sqrt sx.variance, sqrt sy.variance
+    if stdx = 0.0 || stdy = 0.0 || isInf(stdx) || isInf(stdy) then System.Double.NaN else
+    let d1 = float(n) * sx.mean * sy.mean
+    let d2 = float(n-1) * stdx * stdy
+    ((filtered |> Array.map (fun(s,t)->s*t) |> Array.sum) - d1)/d2
+
 #if JavaScript
 type Complex(real:float, imaginary:float) =                    
     let re = real
@@ -152,9 +225,6 @@ let private nextHighestPowerOfTwo n =
   let   i16  = i8  ||| (i8 >>> 16)
   let _i32 = i16 ||| (i16 >>> 32)
   1 + _i32
-
-let private isNan = System.Double.IsNaN
-let private isInf = System.Double.IsInfinity
 
 let histogram_ n xmin xmax xs =
     if n < 1 then failwith "n: must be > 0"
