@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <meta charset="utf-8" />
+	<link rel="stylesheet" href="sample.css" />
+    <link rel="stylesheet" href="https://cdn.rawgit.com/predictionmachines/InteractiveDataDisplay/v1.1.4/dist/idd.css" />
+	<link rel="stylesheet" href="https://cdn.rawgit.com/predictionmachines/InteractiveDataDisplay/v1.1.4/dist/chartViewer.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.3/modernizr.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/rxjs/4.0.6/rx.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
+    <script src="https://cdn.rawgit.com/predictionmachines/InteractiveDataDisplay/v1.1.4/dist/idd.min.js"></script>
+	<script src="https://cdn.rawgit.com/predictionmachines/InteractiveDataDisplay/v1.1.4/dist/chartViewer.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.9.4/jquery.dataTables.min.js"></script>
+	
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.1.2/papaparse.min.js"></script>
+    
+    <link href="angara.tablejs.css" rel="stylesheet" />
+    <script src="angara.tablejs.js"></script>
+	<script src="Angara.Statistcs.JS.js"></script>	
+    
+    <script type="text/javascript">
+		function loadParsedToDiv(parsed,jq){
+			var names = parsed.meta.fields;
+			var data = [];
+			for(var j=0;j< names.length; j++)
+				data[j] = [];					
+			for(var i=0; i< parsed.data.length; i++) //transforming rows to columns
+				for(var j=0;j< names.length;j++)
+					data[j].push(Number(parsed.data[i][names[j]]));
+					
+			var tableSource = StatisticsHelpers.getTableViewerSource(names,data);
+			TableViewer.show(jq, tableSource);
+		}
+	
+        $(document).ready(function () {
+			Papa.parse("versicolor.csv", {
+				download: true,
+				header: true,
+				complete: function(results) {
+					loadParsedToDiv(results,$("#versicolor"));
+				}
+			});
+			Papa.parse("virginica.csv", {
+				download: true,
+				header: true,
+				complete: function(results) {
+					loadParsedToDiv(results,$("#virginica"));
+				}
+			});
+			Papa.parse("setosa.csv", {
+				download: true,
+				header: true,
+				complete: function(results) {
+					loadParsedToDiv(results,$("#setosa"));
+				}
+			});            
+        });
+    </script>
+</head>
+<body style="padding:1em;">
+	<h1>3 species of iris</h1>
+	<p>This famous (Fisher's or Anderson's) iris data set gives the measurements in centimeters of the variables sepal length and width and petal length and width, respectively, for 50 flowers from each of 3 species of iris. The species are Iris setosa, versicolor, and virginica.</p>
+	<div style="padding:2em;">
+		<h2>versicolor</h2>
+		<div id="versicolor"></div>
+	</div>
+	<div style="padding:2em;">
+		<h2>virginica</h2>
+		<div id="virginica"></div>
+	</div>
+	<div style="padding:2em;">
+		<h2>setosa</h2>
+		<div id="setosa"></div>
+	</div>
+</body>
+</html>
