@@ -1,0 +1,15 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+	<meta charset="utf-8" />
+    <script type="text/javascript" src="Angara.Statistcs.JS.js"></script>
+    <script>
+        var rng = MT.MT19937.New1(321);
+        for (var i = 0; i < 1000000; i++)
+            document.write(rng.genrand_int32()+',');
+    </script>
+</head>
+<body>    
+</body>
+</html>

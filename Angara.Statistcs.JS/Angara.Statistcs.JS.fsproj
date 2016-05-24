@@ -66,7 +66,7 @@
     <Compile Include="compilationTest.fs" />
     <Compile Include="Statistics.fs" />
     <Compile Include="WebHelpers.fs" />
-    <None Include="MT.fs" />
+    <Compile Include="MT.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />

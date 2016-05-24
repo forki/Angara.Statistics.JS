@@ -31,10 +31,12 @@
   <ItemGroup>
     <Content Include="css\jasmine.css" />
     <Content Include="packages.config" />
+    <Content Include="RngCSVOutput.html" />
     <Content Include="Scripts\jasmine-html.js" />
     <Content Include="Scripts\jasmine.js" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Scripts\nodeRngCSVGen.js" />
     <Content Include="Tests\Test2Tests.js" />
   </ItemGroup>
   <ItemGroup>

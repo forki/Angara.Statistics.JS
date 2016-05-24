@@ -58,7 +58,7 @@ let getTableViewerSource (columnNames:string array) (columnData:float array arra
         Array.mapi2 merger summaries qsummaries
 
     let pdfs =
-        let samples = 30        
+        let samples = 64        
         let f = Statistics.kde samples
         let cast a =
             let (x,y) = a

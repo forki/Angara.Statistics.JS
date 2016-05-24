@@ -1,7 +1,25 @@
 ﻿[<ReflectedDefinition>]
 module MT
 
-open Statistics
+#if JavaScript
+open WebSharper
+#endif
+
+[<Inline "$0">]
+let inline int64 x = int64 x
+
+[<Inline "$0">]
+let inline int32 x = int32 x
+
+[<Inline "$0">]
+let inline uint32 x = uint32 x
+
+[<Inline "$0">]
+let inline uint64 x = uint64 x
+
+let mod32 = 4294967296.0 //2^32
+
+let coerceU32 x = (x+mod32)%mod32
 
 // http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MT2002/CODES/mt19937ar.c
 //
@@ -43,44 +61,54 @@ open Statistics
 //   http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt.html
 //   email: m-mat @ math.sci.hiroshima-u.ac.jp (remove space)
 
-type MT19937 private (
-                        mt:uint32[], // the array for the state vector
-                        idx:int      // index of the next word from the state (0..N)
-                        ) =
-    // Period parameters
-    [<Literal>] static let N = 624
-    [<Literal>] static let M = 397
-    [<Literal>] static let MATRIX_A = 0x9908b0dfu   // constant vector a
-    [<Literal>] static let UPPER_MASK = 0x80000000u // most significant w-r bits
-    [<Literal>] static let LOWER_MASK = 0x7fffffffu // least significant r bits
+let N = 624
+let M = 397
+let MATRIX_A = float(0x9908b0dfu)   // constant vector a
+let UPPER_MASK = float(0x80000000u) // most significant w-r bits
+let LOWER_MASK = float(0x7fffffffu) // least significant r bits
 
-    let mutable mti = idx // mti==N+1 means mt[N] is not initialized
+[<Direct "$value >>> $shift">]
+let shiftRightUint32 (value:float) (shift:int) =
+    coerceU32(float((uint32(value) >>> shift)))
 
-    // initializes mt[N] with a seed
-    static let init_genrand s =
-        let mt:uint32[] = Array.zeroCreate N // the array for the state vector
-        mt.[0] <- s &&& 0xffffffffu
-        for mti = 1 to N-1 do
-            mt.[mti] <- 
-                (1812433253u * (mt.[mti-1] ^^^ (mt.[mti-1] >>> 30)) + uint32 mti)
-                // See Knuth TAOCP Vol2. 3rd Ed. P.106 for multiplier. 
-                // In the previous versions, MSBs of the seed affect 
-                // only MSBs of the array mt[].
-                // 2002/01/09 modified by Makoto Matsumoto
-            mt.[mti] <- mt.[mti] &&& 0xffffffffu
-            // for >32 bit machines
-        mt
+[<Direct "$left ^ $right">]
+let xorUint32 (left:float) (right:float) =
+    coerceU32(float(uint32(left) ^^^ uint32(right)))
 
-    static let init_by_array (init_key:uint32[]) =
-        let mt = init_genrand(19650218u)
+let mulUint32 (left:float) (right:float) =
+    coerceU32(float(uint32(left) * uint32(right)))
+
+[<Direct "$value >>> $shift">]
+let shiftRightInt32 (value:int32) shift =
+    value >>> shift
+
+// initializes mt[N] with a seed
+let init_genrand (s:float) =
+    let mt:float[] = Array.zeroCreate N // the array for the state vector
+    mt.[0] <- float ((uint32 s) &&& 0xffffffffu)
+    for mti = 1 to N-1 do
+        let fmti = float mti
+        let a = mulUint32 (float 1812433253u) (float(uint32(xorUint32 (mt.[mti-1]) (shiftRightUint32 (mt.[mti-1]) 30))))
+        mt.[mti] <- coerceU32(a + fmti)
+            // See Knuth TAOCP Vol2. 3rd Ed. P.106 for multiplier. 
+            // In the previous versions, MSBs of the seed affect 
+            // only MSBs of the array mt[].
+            // 2002/01/09 modified by Makoto Matsumoto
+        mt.[mti] <- coerceU32(float(uint32(mt.[mti]) &&& 0xffffffffu))
+        // for >32 bit machines
+    mt
+
+let init_by_array (init_key:float[]) =
+        let mt = init_genrand(float(19650218u))
         let mutable i = 1
         let mutable j = 0
         let key_length = Array.length init_key
         let len = max key_length N
         for k = 1 to len do
             let k = len - k + 1
-            mt.[i] <- (mt.[i] ^^^ ((mt.[i-1] ^^^ (mt.[i-1] >>> 30)) * 1664525u)) + init_key.[j] + uint32 j // non linear
-            mt.[i] <- mt.[i] &&& 0xffffffffu // for WORDSIZE > 32 machines
+            let a = (xorUint32 (mt.[i]) (coerceU32((xorUint32 (float(mt.[i-1])) (shiftRightUint32 (mt.[i-1]) 30)) * float(1664525u))))
+            mt.[i] <- coerceU32(float(a) + init_key.[j] + float(j)) // non linear
+            mt.[i] <- float(uint32(mt.[i]) &&& 0xffffffffu) // for WORDSIZE > 32 machines
             i <- i + 1
             j <- j + 1
             if i >= N then 
@@ -90,31 +118,43 @@ type MT19937 private (
         let len = N-1
         for k = 1 to len do
             let k = len - k + 1
-            mt.[i] <- (mt.[i] ^^^ ((mt.[i-1] ^^^ (mt.[i-1] >>> 30)) * 1566083941u)) - uint32 i; // non linear
-            mt.[i] <- mt.[i] &&& 0xffffffffu // for WORDSIZE > 32 machines
+            let a = (uint32(mt.[i]) ^^^ ((uint32(mt.[i-1]) ^^^ (shiftRightUint32 (uint32(mt.[i-1])) 30)) * 1566083941u))
+            mt.[i] <- coerceU32(float(a) - float(i)) // non linear
+            mt.[i] <- float(uint32(mt.[i]) &&& 0xffffffffu) // for WORDSIZE > 32 machines
             i <- i + 1
             if i >= N then 
                 mt.[0] <- mt.[N-1]
                 i <- 1
 
-        mt.[0] <- 0x80000000u //* MSB is 1; assuring non-zero initial array */ 
+        mt.[0] <- float 0x80000000u //* MSB is 1; assuring non-zero initial array */ 
         mt
 
+type MT19937 private (
+                        mt:float[], // the array for the state vector
+                        idx:int      // index of the next word from the state (0..N)
+                        ) =
+    // Period parameters
+
+    let mutable mti = idx // mti==N+1 means mt[N] is not initialized
+
     // generates a random number on [0,0xffffffff]-interval 
-    let genrand_int32() : uint32 =
-        let mutable y = 0u
-        let mag01 = [|0x0u; MATRIX_A|]
+    let genrand_int32() : float =
+        let mutable y = 0.0 //uint32
+        let mag01 = [|float(0x0u); MATRIX_A|]
         // mag01[x] = x * MATRIX_A  for x=0,1
 
         if (mti >= N) then // generate N words at one time
             for  kk=0 to N-M-1 do
-                y <- (mt.[kk] &&& UPPER_MASK) ||| (mt.[kk+1] &&& LOWER_MASK)
-                mt.[kk] <- mt.[kk+M] ^^^ (y >>> 1) ^^^ mag01.[int(y &&& 0x1u)]
+                y <- float((uint32(mt.[kk]) &&& uint32(UPPER_MASK)) ||| (uint32(mt.[kk+1]) &&& uint32(LOWER_MASK)))
+                let a = uint32(mt.[kk+M])
+                let b = (shiftRightUint32 (uint32(y)) 1)
+                let c = uint32(mag01.[int(uint32(y) &&& 0x1u)])
+                mt.[kk] <- float(a ^^^ b ^^^ c)
             for kk = N-M to N-2 do
-                y <- (mt.[kk] &&& UPPER_MASK) ||| (mt.[kk+1] &&& LOWER_MASK)
-                mt.[kk] <- mt.[kk+(M-N)] ^^^ (y >>> 1) ^^^ mag01.[int(y &&& 0x1u)]
-            y <- (mt.[N-1] &&& UPPER_MASK) ||| (mt.[0] &&& LOWER_MASK)
-            mt.[N-1] <- mt.[M-1] ^^^ (y >>> 1) ^^^ mag01.[int(y &&& 0x1u)];
+                y <- float((uint32(mt.[kk]) &&& uint32(UPPER_MASK)) ||| (uint32(mt.[kk+1]) &&& uint32(LOWER_MASK)))
+                mt.[kk] <- float(uint32(mt.[kk+(M-N)]) ^^^ (shiftRightUint32 (uint32(y)) 1) ^^^ uint32(mag01.[int(uint32(y) &&& 0x1u)]))
+            y <- float((uint32(mt.[N-1]) &&& uint32(UPPER_MASK)) ||| (uint32(mt.[0]) &&& uint32(LOWER_MASK)))
+            mt.[N-1] <- float(uint32(mt.[M-1]) ^^^ (shiftRightUint32 (uint32(y)) 1) ^^^ uint32(mag01.[int(uint32(y) &&& 0x1u)]));
 
             mti <- 0
   
@@ -122,10 +162,10 @@ type MT19937 private (
         mti <- mti + 1
 
         // Tempering
-        y <- y ^^^ (y >>> 11)
-        y <- y ^^^ ((y <<< 7) &&& 0x9d2c5680u)
-        y <- y ^^^ ((y <<< 15) &&& 0xefc60000u)
-        y <- y ^^^ (y >>> 18)
+        y <- float(uint32(y) ^^^ (shiftRightUint32 (uint32(y)) 11))
+        y <- float(uint32(y) ^^^ ((uint32(y) <<< 7) &&& 0x9d2c5680u))
+        y <- float(uint32(y) ^^^ ((uint32(y) <<< 15) &&& 0xefc60000u))
+        y <- float(uint32(y) ^^^ (shiftRightUint32 (uint32(y)) 18))
 
         y
 
@@ -221,9 +261,9 @@ type MT19937 private (
 
         let mutable r = System.Double.PositiveInfinity
         while System.Double.IsPositiveInfinity r do
-            let digit = int(genrand_int32() &&& 255u)
+            let digit = int(uint32(genrand_int32()) &&& 255u)
             let sign = if digit &&& 1 = 0 then -1.0 else 1.0 // float(int(digit &&& 1)*2-1)
-            let i = digit >>> 1
+            let i = shiftRightInt32 digit 1
             let x = genrand_float()*table_x.[i]
             if x<table_x.[i+1] then r <- x*sign
             elif i=0 then r <- tail()*sign
@@ -260,17 +300,20 @@ type MT19937 private (
     do
         if mt.Length <> N then failwith (sprintf "State must be an array of length %d" N)
 
-    new (?seed:uint32) =
-        let state = init_genrand (defaultArg seed 5489u)
+    new ()=
+        MT19937(5489.0)
+
+    new (seed:float) =
+        let state = init_genrand seed
         MT19937(state, N)
 
-    new (seed:uint32[]) =
-        if Array.length seed = N+1 && seed.[N] < 2u + uint32 N then
-            let state = Array.init N (fun i -> seed.[i])
-            let idx = int (seed.[N])
+    new (seed_arr:float[]) =
+        if Array.length seed_arr = N+1 && ((uint32)seed_arr.[N]) < 2u + uint32 N then
+            let state = Array.init N (fun i -> seed_arr.[i])
+            let idx = int (seed_arr.[N])
             MT19937(state, idx)
         else
-            let state = init_by_array(seed)
+            let state = init_by_array(seed_arr)
             MT19937(state, N)
     member private x.getMt = Array.copy mt
     member private x.getIdx = mti
@@ -278,7 +321,7 @@ type MT19937 private (
         MT19937(copy.getMt, copy.getIdx)
 
     /// returns an array that allows to exactly restore the state of the generator.
-    member x.get_seed() = [| yield! mt; yield uint32 mti|]
+    member x.get_seed() = [| yield! mt; yield float(uint32 mti)|]
 
     /// generates a random number on [0,0xffffffff]-interval 
     member __.uniform_uint32() = genrand_int32()
@@ -293,13 +336,13 @@ type MT19937 private (
         // if typeof<max> were uint32:
         //elif max = System.UInt32.MaxValue then x.genrand_int32()
         else
-            let umax = uint32 max
+            let umax = coerceU32(float(max))
             let bucket_size = // (System.UInt32.MaxValue+1)/(max+1)
-                let bs = System.UInt32.MaxValue / (umax + 1u)
-                if System.UInt32.MaxValue % (umax + 1u) = umax then bs + 1u else bs
+                let bs = floor((mod32-1.0) /(umax + 1.0))
+                if (mod32-1.0) % (umax + 1.0) = umax then bs + 1.0 else bs
             // rejection algorithm
-            let mutable r = genrand_int32() / bucket_size
-            while r > umax do r <- genrand_int32() / bucket_size
+            let mutable r = floor(genrand_int32() / bucket_size)
+            while r > umax do r <- floor(genrand_int32() / bucket_size)
             int r
 
     /// generates 'true' with probability 'p' or 'false' with probability '1-p'
