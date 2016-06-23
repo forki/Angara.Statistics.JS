@@ -10574,8 +10574,327 @@ var JSON;JSON||(JSON={}),function(){"use strict";function i(n){return n<10?"0"+n
 
 (function()
 {
- var Global=this,Runtime=this.IntelliFactory.Runtime,Statistics,Complex,Math,Arrays,Operators,Number,Enumerator,Seq,NaN1,isNaN,Infinity1,Array,Unchecked;
+ var Global=this,Runtime=this.IntelliFactory.Runtime,Number,MT,Arrays,Seq,Operators,Math,Infinity1,MT19937,Array,Statistics,Complex,Enumerator,NaN1,isNaN,Unchecked,List,T,MatchFailureException;
  Runtime.Define(Global,{
+  MT:{
+   LOWER_MASK:Runtime.Field(function()
+   {
+    return Number(2147483647);
+   }),
+   M:Runtime.Field(function()
+   {
+    return 397;
+   }),
+   MATRIX_A:Runtime.Field(function()
+   {
+    return Number(2567483615);
+   }),
+   MT19937:Runtime.Class({
+    bernoulli:function(p)
+    {
+     return p<=0?false:p>=1?true:Number(this.genrand_int32())<=p*Number(4294967295);
+    },
+    genrand_float:function()
+    {
+     return Number(this.genrand_int32())*(1/4294967296);
+    },
+    genrand_int32:function()
+    {
+     var y,mag01,_,kk,kk1;
+     y=0;
+     mag01=[0,MT.MATRIX_A()];
+     if(this.mti>=MT.N())
+      {
+       for(kk=0;kk<=MT.N()-MT.M()-1;kk++){
+        y=MT.orUint32(MT.andUint32(Arrays.get(this.mt,kk),MT.UPPER_MASK()),MT.andUint32(Arrays.get(this.mt,kk+1),MT.LOWER_MASK()));
+        Arrays.set(this.mt,kk,MT.xorUint32(MT.xorUint32(Arrays.get(this.mt,kk+MT.M()),MT.shiftRightUint32(y,1)),Arrays.get(mag01,MT.andUint32(y,Number(1))<<0)));
+       }
+       for(kk1=MT.N()-MT.M();kk1<=MT.N()-2;kk1++){
+        y=MT.orUint32(MT.andUint32(Arrays.get(this.mt,kk1),MT.UPPER_MASK()),MT.andUint32(Arrays.get(this.mt,kk1+1),MT.LOWER_MASK()));
+        Arrays.set(this.mt,kk1,MT.xorUint32(MT.xorUint32(Arrays.get(this.mt,kk1+(MT.M()-MT.N())),MT.shiftRightUint32(y,1)),Arrays.get(mag01,MT.andUint32(y,Number(1))<<0)));
+       }
+       y=MT.orUint32(MT.andUint32(Arrays.get(this.mt,MT.N()-1),MT.UPPER_MASK()),MT.andUint32(Arrays.get(this.mt,0),MT.LOWER_MASK()));
+       Arrays.set(this.mt,MT.N()-1,MT.xorUint32(MT.xorUint32(Arrays.get(this.mt,MT.M()-1),MT.shiftRightUint32(y,1)),Arrays.get(mag01,MT.andUint32(y,Number(1))<<0)));
+       _=void(this.mti=0);
+      }
+     else
+      {
+       _=null;
+      }
+     y=Arrays.get(this.mt,this.mti);
+     this.mti=this.mti+1;
+     y=MT.xorUint32(y,MT.shiftRightUint32(y,11));
+     y=MT.xorUint32(y,MT.andUint32(MT.shiftLeftUint32(y,7),Number(2636928640)));
+     y=MT.xorUint32(y,MT.andUint32(MT.shiftLeftUint32(y,15),Number(4022730752)));
+     y=MT.xorUint32(y,MT.shiftRightUint32(y,18));
+     return y;
+    },
+    get_getIdx:function()
+    {
+     return this.mti;
+    },
+    get_getMt:function()
+    {
+     return this.mt.slice();
+    },
+    get_seed:function()
+    {
+     var x=this;
+     return Seq.toArray(Seq.delay(function()
+     {
+      return Seq.append(x.mt,Seq.delay(function()
+      {
+       return[Number(x.mti)];
+      }));
+     }));
+    },
+    normal:function()
+    {
+     return this.znorm();
+    },
+    uniform_float64:function()
+    {
+     return this.genrand_float();
+    },
+    uniform_int:function(max)
+    {
+     var _,_1,umax,bs,bucket_size,r;
+     if(max<0)
+      {
+       _=Operators.FailWith("max: The value cannot be negative");
+      }
+     else
+      {
+       if(max===0)
+        {
+         _1=0;
+        }
+       else
+        {
+         umax=MT.coerceU32(Number(max));
+         bs=Math.floor((MT.mod32()-1)/(umax+1));
+         bucket_size=(MT.mod32()-1)%(umax+1)===umax?bs+1:bs;
+         r=Math.floor(Number(this.genrand_int32())/bucket_size);
+         while(r>umax)
+          {
+           r=Math.floor(Number(this.genrand_int32())/bucket_size);
+          }
+         _1=r<<0;
+        }
+       _=_1;
+      }
+     return _;
+    },
+    uniform_uint32:function()
+    {
+     return this.genrand_int32();
+    },
+    znorm:function()
+    {
+     var tail,_this=this,r1,digit,sign,i,x1,_,_1,y1;
+     tail=function()
+     {
+      var exponential,tail_start,r,x,y;
+      exponential=function()
+      {
+       return-Math.log(1-_this.genrand_float());
+      };
+      tail_start=Arrays.get(_this.table_x,1);
+      r=Infinity1;
+      while(r===Infinity1)
+       {
+        x=exponential(null)/tail_start;
+        y=exponential(null);
+        2*y>x*x?r=x+tail_start:null;
+       }
+      return r;
+     };
+     r1=Infinity1;
+     while(r1===Infinity1)
+      {
+       digit=(_this.genrand_int32()&255)<<0;
+       sign=(digit&1)===0?-1:1;
+       i=MT.shiftRightInt32(digit,1);
+       x1=_this.genrand_float()*Arrays.get(_this.table_x,i);
+       if(x1<Arrays.get(_this.table_x,i+1))
+        {
+         _=r1=x1*sign;
+        }
+       else
+        {
+         if(i===0)
+          {
+           _1=r1=tail(null)*sign;
+          }
+         else
+          {
+           y1=Arrays.get(_this.table_y,i)+_this.genrand_float()*(Arrays.get(_this.table_y,i+1)-Arrays.get(_this.table_y,i));
+           _1=y1<Math.exp(-0.5*x1*x1)?r1=x1*sign:null;
+          }
+         _=_1;
+        }
+      }
+     return r1;
+    }
+   },{
+    New:function(copy)
+    {
+     return Runtime.New(this,MT19937.New11(copy.get_getMt(),copy.get_getIdx()));
+    },
+    New1:function(seed)
+    {
+     var state;
+     state=MT.init_genrand(seed);
+     return Runtime.New(this,MT19937.New11(state,MT.N()));
+    },
+    New11:function(mt,idx)
+    {
+     var r;
+     r=Runtime.New(this,{});
+     r.mt=mt;
+     r.mti=idx;
+     r.table_x=[3.71308624674036,3.44261985589665,3.22308498457862,3.08322885821421,2.97869625264502,2.89434400701867,2.82312535054597,2.76116937238415,2.70611357311872,2.65640641125819,2.61097224842861,2.56903362592164,2.53000967238547,2.49345452209195,2.45901817740835,2.42642064553021,2.39543427800747,2.36587137011399,2.33757524133553,2.310413683695,2.28427405967366,2.25905957386533,2.23468639558706,2.21108140887473,2.18818043207202,2.16592679374484,2.14427018235626,2.12316570866979,2.102573135185,2.08245623798772,2.06278227450396,2.04352153665067,2.02464697337293,2.00613386995897,1.98795957412306,1.97010326084971,1.95254572954889,1.9352692282919,1.91825730085973,1.90149465310032,1.88496703570287,1.86866114098954,1.85256451172309,1.83666546025338,1.82095299659101,1.80541676421405,1.79004698259462,1.77483439558077,1.75977022489423,1.74484612810838,1.73005416055824,1.71538674070812,1.7008366185643,1.68639684677349,1.67206075409185,1.65782192094821,1.64367415685698,1.62961147946468,1.61562809503713,1.60171838021528,1.5878768648844,1.57409821601675,1.56037722235984,1.5467087798535,1.53308787766756,1.51950958475937,1.50596903685655,1.49246142377462,1.4789819769831,1.46552595733579,1.45208864288222,1.43866531667746,1.42525125450686,1.41184171243976,1.39843191412361,1.38501703772515,1.37159220241973,1.35815245432242,1.34469275174571,1.33120794965768,1.31769278320134,1.30414185012042,1.29054959191787,1.2769102735517,1.26321796144603,1.24946649956433,1.23564948325448,1.22176023053096,1.20779175040676,1.19373670782377,1.17958738465446,1.16533563615505,1.15097284213898,1.13648985200308,1.12187692257225,1.10712364752354,1.09221887689655,1.07715062488194,1.06190596368362,1.04647090075258,1.03083023605646,1.0149673952393,0.998864233480643,0.98250080350276,0.965855079388131,0.948902625497912,0.931616196601354,0.913965251008802,0.895915352566239,0.877427429097716,0.858456843178051,0.838952214281207,0.818853906683318,0.798092060626275,0.776583987876148,0.75423066443451,0.730911910621881,0.706479611313608,0.680747918645904,0.653478638715042,0.624358597309088,0.592962942441978,0.558692178375518,0.520656038725145,0.477437837253788,0.426547986303305,0.362871431028418,0.272320864704664,0];
+     r.table_y=[0,0.0026696290839025,0.00554899522081647,0.00862448441293047,0.0118394786579823,0.015167298010672,0.0185921027371658,0.0221033046161116,0.0256932919361496,0.0293563174402538,0.0330878861465052,0.0368843887869688,0.0407428680747906,0.0446608622008724,0.048636295860284,0.0526674019035032,0.0567526634815386,0.0608907703485664,0.0650805852136319,0.0693211173941803,0.0736115018847549,0.0779509825146547,0.0823388982429574,0.086774671895543,0.0912578008276347,0.0957878491225782,0.100364441029546,0.104987255410355,0.109656021015818,0.114370512449888,0.119130546708719,0.123935980203982,0.128786706197104,0.133682652584648,0.138623779985851,0.143610080091933,0.148641574243697,0.153718312209587,0.158840371140935,0.164007854684928,0.169220892238925,0.174479638332402,0.179784272124962,0.185134997010713,0.190532040320914,0.19597565311811,0.201466110076203,0.207003709441874,0.212588773073736,0.218221646556371,0.223902699387134,0.229632325234303,0.235410942265728,0.241238993547751,0.247116947514697,0.253045298509766,0.259024567398711,0.265055302258162,0.271138079141025,0.277273502921898,0.283462208226013,0.289704860445811,0.296002156849856,0.30235482778948,0.308763638009252,0.315229388068158,0.321752915879209,0.328335098376152,0.334976853316971,0.341679141235014,0.348442967549872,0.355269384851547,0.362159495373033,0.369114453668275,0.376135469514454,0.383223811059884,0.390380808241389,0.397607856498043,0.404906420811488,0.412278040107025,0.419724332054038,0.427246998309562,0.434847830254662,0.442528715280247,0.450291643686927,0.458138716272872,0.466072152694571,0.47409430069825,0.482207646334839,0.490414825289322,0.498718635476584,0.507122051081305,0.515628238249872,0.524240572678993,0.532962659389988,0.541798355031724,0.550751793121055,0.559827412710695,0.569029991074722,0.578364681126702,0.587837054441821,0.597453150951812,0.607219536632605,0.617143370826562,0.627232485257815,0.637495477343145,0.647941821118551,0.658582000058654,0.669427667357706,0.680491841006414,0.691789143446036,0.703336099025817,0.715151507420477,0.727256918354506,0.739677243683338,0.752441559185704,0.765584173909236,0.779146085941703,0.793177011783859,0.807738294696121,0.822907211395262,0.838783605310647,0.855500607885064,0.873243048926854,0.892281650802303,0.913043647992038,0.936282681708371,0.963599693155768,1];
+     Arrays.length(r.mt)!==MT.N()?Operators.FailWith("State must be an array of length "+Global.String(MT.N())):null;
+     return r;
+    },
+    New2:function(seed_arr)
+    {
+     var _,state,idx,state1;
+     if(seed_arr.length===MT.N()+1?Arrays.get(seed_arr,MT.N())<2+MT.N():false)
+      {
+       state=Arrays.init(MT.N(),function(i)
+       {
+        return Arrays.get(seed_arr,i);
+       });
+       idx=Arrays.get(seed_arr,MT.N())<<0;
+       _=MT19937.New11(state,idx);
+      }
+     else
+      {
+       state1=MT.init_by_array(seed_arr);
+       _=MT19937.New11(state1,MT.N());
+      }
+     return Runtime.New(this,_);
+    },
+    New3:function()
+    {
+     return Runtime.New(this,MT19937.New1(5489));
+    }
+   }),
+   N:Runtime.Field(function()
+   {
+    return 624;
+   }),
+   UPPER_MASK:Runtime.Field(function()
+   {
+    return Number(2147483648);
+   }),
+   andUint32:function(left,right)
+   {
+    return MT.coerceU32(Number(left&right));
+   },
+   coerceU32:function(x)
+   {
+    return(x+MT.mod32())%MT.mod32();
+   },
+   createSeededMT19937:function(seed)
+   {
+    return MT19937.New1(seed);
+   },
+   init_by_array:function(init_key)
+   {
+    var mt,i,j,key_length,len,k,k1,a,_,len1,k2,k3,a1,_1;
+    mt=MT.init_genrand(Number(19650218));
+    i=1;
+    j=0;
+    key_length=init_key.length;
+    len=Operators.Max(key_length,MT.N());
+    for(k=1;k<=len;k++){
+     k1=len-k+1;
+     a=MT.xorUint32(Arrays.get(mt,i),MT.coerceU32(MT.mulUint32(MT.xorUint32(Arrays.get(mt,i-1),MT.shiftRightUint32(Arrays.get(mt,i-1),30)),Number(1664525))));
+     Arrays.set(mt,i,MT.coerceU32(a+Arrays.get(init_key,j)+Number(j)));
+     Arrays.set(mt,i,MT.andUint32(Arrays.get(mt,i),Number(4294967295)));
+     i=i+1;
+     j=j+1;
+     if(i>=MT.N())
+      {
+       Arrays.set(mt,0,Arrays.get(mt,MT.N()-1));
+       _=i=1;
+      }
+     else
+      {
+       _=null;
+      }
+     j>=key_length?j=0:null;
+    }
+    len1=MT.N()-1;
+    for(k2=1;k2<=len1;k2++){
+     k3=len1-k2+1;
+     a1=MT.xorUint32(Arrays.get(mt,i),MT.mulUint32(MT.xorUint32(Arrays.get(mt,i-1),MT.shiftRightUint32(Arrays.get(mt,i-1),30)),Number(1566083941)));
+     Arrays.set(mt,i,MT.coerceU32(Number(a1)-Number(i)));
+     Arrays.set(mt,i,MT.andUint32(Arrays.get(mt,i),Number(4294967295)));
+     i=i+1;
+     if(i>=MT.N())
+      {
+       Arrays.set(mt,0,Arrays.get(mt,MT.N()-1));
+       _1=i=1;
+      }
+     else
+      {
+       _1=null;
+      }
+    }
+    Arrays.set(mt,0,Number(2147483648));
+    return mt;
+   },
+   init_genrand:function(s)
+   {
+    var mt,mti,fmti,a;
+    mt=Array(MT.N());
+    Arrays.set(mt,0,Number(s&4294967295));
+    for(mti=1;mti<=MT.N()-1;mti++){
+     fmti=Number(mti);
+     a=MT.mulUint32(Number(1812433253),Number(MT.xorUint32(Arrays.get(mt,mti-1),MT.shiftRightUint32(Arrays.get(mt,mti-1),30))));
+     Arrays.set(mt,mti,MT.coerceU32(a+fmti));
+     Arrays.set(mt,mti,MT.coerceU32(Number(Arrays.get(mt,mti)&4294967295)));
+    }
+    return mt;
+   },
+   mod32:Runtime.Field(function()
+   {
+    return 4294967296;
+   }),
+   mulUint32:function($left,$right)
+   {
+    var $0=this,$this=this;
+    return Global.BigInteger($left).multiply(Global.BigInteger($right)).remainder(Global.BigInteger(4294967296.0)).toJSValue();
+   },
+   orUint32:function(left,right)
+   {
+    return MT.coerceU32(Number(left|right));
+   },
+   shiftLeftUint32:function($value,$shift)
+   {
+    var $0=this,$this=this;
+    return(($value<<$shift)+4294967296.0)%4294967296.0;
+   },
+   shiftRightInt32:function($value,$shift)
+   {
+    var $0=this,$this=this;
+    return(($value>>>$shift)+4294967296.0)%4294967296.0;
+   },
+   shiftRightUint32:function($value,$shift)
+   {
+    var $0=this,$this=this;
+    return(($value>>>$shift)+4294967296.0)%4294967296.0;
+   },
+   xorUint32:function($left,$right)
+   {
+    var $0=this,$this=this;
+    return(($left^$right)+4294967296.0)%4294967296.0;
+   }
+  },
   Statistics:{
    Complex:Runtime.Class({
     get_Imaginary:function()
@@ -11435,7 +11754,7 @@ var JSON;JSON||(JSON={}),function(){"use strict";function i(n){return n<10?"0"+n
   StatisticsHelpers:{
    getTableViewerSource:function(columnNames,columnData)
    {
-    var len,summaries,qsummaries,combinedSummaries;
+    var len,summaries,qsummaries,merger,combinedSummaries,exp2ceiling,pdf_samples,n0,f,cast,pdfs,corrMatrixData;
     len=Arrays.length(columnNames);
     summaries=Seq.toArray(Seq.delay(function()
     {
@@ -11451,7 +11770,7 @@ var JSON;JSON||(JSON={}),function(){"use strict";function i(n){return n<10?"0"+n
       return Statistics.qsummary(Arrays.get(columnData,i));
      },Operators.range(0,len-1));
     }));
-    combinedSummaries=Arrays.mapi2(function(i)
+    merger=function(i)
     {
      return function(sum)
      {
@@ -11464,7 +11783,7 @@ var JSON;JSON||(JSON={}),function(){"use strict";function i(n){return n<10?"0"+n
         totalCount:sum.count,
         max:sum.max,
         min:sum.min,
-        mean:sum.max,
+        mean:sum.mean,
         variance:sum.variance,
         lb68:qsum.lb68,
         ub68:qsum.ub68,
@@ -11474,33 +11793,98 @@ var JSON;JSON||(JSON={}),function(){"use strict";function i(n){return n<10?"0"+n
        };
       };
      };
-    },summaries,qsummaries);
+    };
+    combinedSummaries=Arrays.mapi2(merger,summaries,qsummaries);
+    exp2ceiling=function(v)
+    {
+     var exps,loop,_,_1,head,head1,next,tail,_2,_3;
+     exps=List.ofArray([4,8,16,32,64,128,256,512,1024]);
+     loop=[];
+     loop[2]=exps;
+     loop[1]=v;
+     loop[0]=1;
+     while(loop[0])
+      {
+       if(loop[2].$==1)
+        {
+         if(loop[2].$1.$==0)
+          {
+           head=loop[2].$0;
+           loop[0]=0;
+           _1=void(loop[1]=head);
+          }
+         else
+          {
+           head1=loop[2].$0;
+           next=loop[2].$1.$0;
+           tail=loop[2].$1.$1;
+           if(next>=loop[1])
+            {
+             loop[0]=0;
+             _2=void(loop[1]=head1);
+            }
+           else
+            {
+             _3=loop[1];
+             loop[2]=Runtime.New(T,{
+              $:1,
+              $0:next,
+              $1:tail
+             });
+             loop[1]=_3;
+             _2=void(loop[0]=1);
+            }
+           _1=_2;
+          }
+         _=_1;
+        }
+       else
+        {
+         loop[0]=0;
+         _=void(loop[1]=Operators.Raise(MatchFailureException.New("C:\\data\\sources\\github\\Angara.Statistics\\Angara.Statistcs.JS\\WebHelpers.fs",64,18)));
+        }
+      }
+     return loop[1];
+    };
+    pdf_samples=exp2ceiling(Number(Arrays.length(Arrays.get(columnData,0))/2>>0));
+    n0=pdf_samples<<0;
+    f=function(xs)
+    {
+     return Statistics.kde(n0,xs);
+    };
+    cast=function(a)
+    {
+     var y,x;
+     y=a[1];
+     x=a[0];
+     return{
+      x:x,
+      f:y
+     };
+    };
+    pdfs=Arrays.map(function(x)
+    {
+     return cast(f(x));
+    },columnData);
+    corrMatrixData=Seq.toArray(Seq.delay(function()
+    {
+     return Seq.map(function(i)
+     {
+      return Seq.toArray(Seq.delay(function()
+      {
+       return Seq.map(function(j)
+       {
+        return Statistics.correlation(Arrays.get(columnData,i),Arrays.get(columnData,j));
+       },Operators.range(i+1,len-1));
+      }));
+     },Operators.range(0,len-2));
+    }));
     return{
      summary:combinedSummaries,
-     pdf:Arrays.map(function(x)
-     {
-      var a;
-      a=Statistics.kde(30,x);
-      return{
-       x:a[0],
-       f:a[1]
-      };
-     },columnData),
+     pdf:pdfs,
      data:columnData,
      correlation:{
-      r:Seq.toArray(Seq.delay(function()
-      {
-       return Seq.map(function(i)
-       {
-        return Seq.toArray(Seq.delay(function()
-        {
-         return Seq.map(function(j)
-         {
-          return Statistics.correlation(Arrays.get(columnData,i),Arrays.get(columnData,j));
-         },Operators.range(i+1,len-1));
-        }));
-       },Operators.range(0,len-2));
-      })),
+      r:corrMatrixData,
       c:columnNames
      }
     };
@@ -11515,19 +11899,24 @@ var JSON;JSON||(JSON={}),function(){"use strict";function i(n){return n<10?"0"+n
  });
  Runtime.OnInit(function()
  {
+  Number=Runtime.Safe(Global.Number);
+  MT=Runtime.Safe(Global.MT);
+  Arrays=Runtime.Safe(Global.WebSharper.Arrays);
+  Seq=Runtime.Safe(Global.WebSharper.Seq);
+  Operators=Runtime.Safe(Global.WebSharper.Operators);
+  Math=Runtime.Safe(Global.Math);
+  Infinity1=Runtime.Safe(Global.Infinity);
+  MT19937=Runtime.Safe(MT.MT19937);
+  Array=Runtime.Safe(Global.Array);
   Statistics=Runtime.Safe(Global.Statistics);
   Complex=Runtime.Safe(Statistics.Complex);
-  Math=Runtime.Safe(Global.Math);
-  Arrays=Runtime.Safe(Global.WebSharper.Arrays);
-  Operators=Runtime.Safe(Global.WebSharper.Operators);
-  Number=Runtime.Safe(Global.Number);
   Enumerator=Runtime.Safe(Global.WebSharper.Enumerator);
-  Seq=Runtime.Safe(Global.WebSharper.Seq);
   NaN1=Runtime.Safe(Global.NaN);
   isNaN=Runtime.Safe(Global.isNaN);
-  Infinity1=Runtime.Safe(Global.Infinity);
-  Array=Runtime.Safe(Global.Array);
-  return Unchecked=Runtime.Safe(Global.WebSharper.Unchecked);
+  Unchecked=Runtime.Safe(Global.WebSharper.Unchecked);
+  List=Runtime.Safe(Global.WebSharper.List);
+  T=Runtime.Safe(List.T);
+  return MatchFailureException=Runtime.Safe(Global.WebSharper.MatchFailureException);
  });
  Runtime.OnLoad(function()
  {
@@ -11538,6 +11927,12 @@ var JSON;JSON||(JSON={}),function(){"use strict";function i(n){return n<10?"0"+n
   Statistics.log_improbable();
   Statistics.improbable();
   Statistics.e();
+  MT.mod32();
+  MT.UPPER_MASK();
+  MT.N();
+  MT.MATRIX_A();
+  MT.M();
+  MT.LOWER_MASK();
   return;
  });
 }());
