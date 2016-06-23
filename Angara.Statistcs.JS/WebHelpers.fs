@@ -47,7 +47,7 @@ let getTableViewerSource (columnNames:string array) (columnData:float array arra
                 totalCount = sum.count;
                 max = sum.max;
                 min = sum.min;
-                mean = sum.max;
+                mean = sum.mean;
                 variance = sum.variance;
                 lb68 = qsum.lb68;
                 ub68 = qsum.ub68;
@@ -56,10 +56,25 @@ let getTableViewerSource (columnNames:string array) (columnData:float array arra
                 median = qsum.median;
             }
         Array.mapi2 merger summaries qsummaries
+    
+    //power of 2 less then v
+    let exp2ceiling v = 
+        let exps = [4.0;8.0;16.0;32.0;64.0;128.0;256.0;512.0;1024.0]
+        let rec check (v:float) exps =
+            match exps with
+            |   head::next::tail  ->
+                if (next>=v) then
+                    head
+                else
+                    check v (next::tail)
+            |   head::[]    -> head
+        check v exps
+                
 
-    let pdfs =
-        let samples = 30        
-        let f = Statistics.kde samples
+    let pdf_samples = exp2ceiling (float ((columnData.[0].Length)/2)) //power of 2 less then 
+    
+    let pdfs =        
+        let f = Statistics.kde (int pdf_samples)
         let cast a =
             let (x,y) = a
             {x=x;f=y}
